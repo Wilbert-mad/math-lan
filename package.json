@@ -1,0 +1,17 @@
+{
+  "name": "math-lan",
+  "version": "1.0.0",
+  "description": "A CoffeeScript made language that can do math.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "coffee -o dist/ -bc src/",
+    "watch": "coffee --watch -o dist/ -bc src/",
+    "test": "node ."
+  },
+  "repository": "https://github.com/Wilbert-mad/math-lan.git",
+  "author": "Wilbert-mad",
+  "license": "MIT",
+  "devDependencies": {
+    "coffeescript": "^2.5.1"
+  }
+}
