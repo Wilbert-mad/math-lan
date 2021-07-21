@@ -7,6 +7,9 @@
 OPERATOR = 'Operator'
 NUMBER = 'Number'
 NUMBERS = '0123456789'
+EOF = 'END-OF-FILE'
+PLUS = '+'
+MINS = '-'
 
 ###
   ERROR
@@ -29,7 +32,7 @@ class Token
     if @value then "#{@name}: #{@value}" else @name
 
 ###
-  COMPIILER
+  LEXER
 ###
 
 class Lexer
@@ -65,7 +68,7 @@ class Lexer
     while @currentChar != null
       if @currentChar is '\t' or @currentChar is ' '
         @advance()
-      else if ['+', '-'].includes(@currentChar)
+      else if [PLUS, MINS].includes(@currentChar)
         tokens.push new Token(OPERATOR, @currentChar)
         @advance()
       else if NUMBERS.slice('').includes(@currentChar)
@@ -75,7 +78,91 @@ class Lexer
         error = new MathError('IllegalChar: '+current)
         @advance()
       
+    tokens.push new Token(EOF)
     return [tokens, error]
 
 
-module.exports = { Lexer }
+###
+  NODES
+###
+
+class NumberNode
+  constructor: (@token) ->
+
+class BinOpNode
+  constructor: (@leftNode, @operatorToken, @rightNode) ->
+
+###
+  PARSER RESULT
+###
+
+class ParserResult
+  constructor: ->
+    @error = null
+    @node = null
+
+  register: (res) ->
+    if res instanceof ParserResult
+      @error = res.error if res.error
+      return res.node
+      
+    return res
+
+  success: (node) ->
+    @node = node
+    return @
+  
+  failure: (error) ->
+    @error = error
+    return @
+
+###
+  PARSER
+###
+
+class Parser
+  constructor: (@tokens) ->
+    @tokenIndex = -1
+    @currentToken = null
+    @advance()
+
+  advance: ->
+    @tokenIndex++
+    if @tokenIndex < @tokens.length
+      @currentToken = @tokens[@tokenIndex]
+    return @currentToken
+
+  parse: ->
+    res = @expression()
+    if not res.error and @currentToken.type isnt EOF
+      return res.failure(new MathError('Expected "+" or "-"'))
+    return res
+  
+  factor: ->
+    res = new ParserResult()
+    token = @currentToken
+
+    if token.type is NUMBER
+      res.register(@advance())
+      return res.success(new NumberNode(token))
+
+    return res.failure(new MathError('Expected number or float'))
+  
+  expression: ->
+    res = new ParserResult()
+    _left = res.register(@factor())
+    return res if res.error
+
+    left = null
+    while [OPERATOR].includes(@currentToken.type)
+      opToken = @currentToken
+      res.register(@advance())
+      right = res.register(@factor())
+      return res if res.error
+      left = new BinOpNode(_left, opToken, right)
+    
+    return res.success(left or _left)
+
+
+
+module.exports = { Lexer, Parser }

@@ -4,8 +4,14 @@
   ©2021 Puppet  
 ###
 
-{Lexer} = require './main'
-ToComplileStrings = ['3 - 1'];
+{ Lexer, Parser } = require './main'
+ToComplileStrings = ['3 - 1', '2'];
 
-tokenResults = new Lexer(ToComplileStrings[0]).tokens()
-console.log tokenResults[0], tokenResults[1]
+for str in ToComplileStrings
+  tokenResults = new Lexer(str).tokens()
+  parser = new Parser(tokenResults[0]) 
+  console.log tokenResults[0], tokenResults[1]
+  continue if tokenResults[1]
+  parsment = parser.parse()
+  console.log parsment.error if parsment.error
+  console.log parsment.node
